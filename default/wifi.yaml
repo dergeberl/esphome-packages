@@ -1,0 +1,14 @@
+substitutions:
+  wifi_ssid: ssid
+  wifi_password: password
+  wifi_ap_passwort: password
+
+wifi:
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
+
+  ap:
+    ssid: ${device_name}
+    password: ${wifi_ap_passwort}
+
+captive_portal:

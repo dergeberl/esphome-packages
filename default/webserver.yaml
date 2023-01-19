@@ -1,0 +1,11 @@
+
+substitutions:
+  webserver_auth_username: "admin"
+  webserver_auth_password: "password"
+
+web_server:
+  port: 80
+  version: 2
+  auth: 
+    username: ${webserver_auth_username}
+    password: ${webserver_auth_password}

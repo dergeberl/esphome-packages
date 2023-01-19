@@ -1,0 +1,43 @@
+substitutions:
+  friendly_name: "Friendly Name"
+
+switch:
+  - platform: safe_mode
+    entity_category: diagnostic
+    name: ${friendly_name} safe_mode
+
+button:
+  - platform: restart
+    name: ${friendly_name} restart
+    entity_category: diagnostic
+    
+  - platform: shutdown
+    name: ${friendly_name} shutdown
+    entity_category: diagnostic
+
+sensor:
+  - platform: uptime
+    name: ${friendly_name} uptime
+    disabled_by_default: true
+    entity_category: diagnostic
+  - platform: wifi_signal
+    name: ${friendly_name} WiFi RSSI
+    disabled_by_default: true
+    update_interval: 120s
+
+text_sensor:
+  - platform: version
+    hide_timestamp: true
+    entity_category: diagnostic
+    name: ${friendly_name} ESPHome version
+    disabled_by_default: true
+  - platform: wifi_info
+    ip_address:
+      name: ${friendly_name} WiFi IP
+      disabled_by_default: true
+    mac_address:
+      name: ${friendly_name} WiFi MAC
+      disabled_by_default: true
+    ssid:
+      name: ${friendly_name} WiFi SSID
+      disabled_by_default: true

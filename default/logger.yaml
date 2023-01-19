@@ -1,0 +1,6 @@
+substitutions:
+  log_level: INFO
+
+logger:
+  level: ${log_level}
+  baud_rate: 0
