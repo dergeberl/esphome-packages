@@ -4,7 +4,7 @@ substitutions:
   uart_tx_pin: GPIO21
   uart_rx_pin: GPIO20
   sen0395_gpio_pin: GPIO5
-  pir_gpio_pin: GPIO5
+  pir_gpio_pin: GPIO6
   pir_delayed_off: 20s
 
 esphome:
