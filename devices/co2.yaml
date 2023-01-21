@@ -6,7 +6,7 @@ substitutions:
   mhz19_temperature_hide: "true"
   mhz19_update_interval: "60s"
   neopixel_pin: GPIO5
-  neopixel_num_leds: 4
+  neopixel_num_leds: "4"
   status_led_pin: GPIO3
   led_orange_above: "800"
   led_red_above: "1000"
