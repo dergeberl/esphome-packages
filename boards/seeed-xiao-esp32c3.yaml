@@ -5,3 +5,6 @@ esphome:
   platformio_options:
     board_build.extra_flags:
       - "-DARDUINO_USB_CDC_ON_BOOT=0" 
+
+logger:
+  baud_rate: 0
