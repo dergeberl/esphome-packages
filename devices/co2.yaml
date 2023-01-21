@@ -8,7 +8,9 @@ substitutions:
   neopixel_pin: GPIO5
   neopixel_num_leds: 4
   status_led_pin: GPIO3
-
+  led_orange_above: "800"
+  led_red_above: "1000"
+  led_red_blink_above: "1400"
 
 esphome:
   project: 
