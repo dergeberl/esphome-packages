@@ -6,22 +6,19 @@ substitutions:
   sen0395_gpio_pin: GPIO5
   pir_gpio_pin: GPIO6
   pir_delayed_off: 20s
-
 esphome:
-  project: 
+  project:
     name: "dergeberl.presence"
     version: "v0.0.0"
   on_boot:
     priority: -100
     then:
       - button.press: sen0395_sensor_reconfigure
-
 uart:
   id: uart_sen0395
   tx_pin: ${uart_tx_pin}
   rx_pin: ${uart_rx_pin}
   baud_rate: 115200
-
 binary_sensor:
   - platform: gpio
     name: ${friendly_name} Presence
@@ -30,16 +27,8 @@ binary_sensor:
     pin:
       number: ${sen0395_gpio_pin}
       mode: INPUT_PULLDOWN
-    on_state: 
-      - if:
-          condition:
-            binary_sensor.is_on: sen0395_presence
-          then:
-            - light.turn_on:
-                id: presence_info_led
-          else:
-            - light.turn_off:
-                id: presence_info_led
+    on_state:
+      - script.execute: update_presence_led
   - platform: gpio
     name: ${friendly_name} Motion
     id: pir_motion
@@ -49,17 +38,8 @@ binary_sensor:
     pin:
       number: ${pir_gpio_pin}
       mode: INPUT_PULLDOWN
-    on_state: 
-      - if:
-          condition:
-            binary_sensor.is_on: pir_motion
-          then:
-            - light.turn_on:
-                id: motion_info_led
-          else:
-            - light.turn_off:
-                id: motion_info_led
-
+    on_state:
+      - script.execute: update_motion_led
 switch:
   - platform: template
     name: ${friendly_name} Presence Sensor
@@ -68,15 +48,37 @@ switch:
     restore_state: true
     optimistic: true
     turn_on_action:
-      - uart.write: 
+      - uart.write:
           id: uart_sen0395
           data: "sensorStart"
     turn_off_action:
-      - uart.write: 
+      - uart.write:
           id: uart_sen0395
           data: "sensorStop"
-
-
+  - platform: template
+    name: ${friendly_name} Presence LED
+    id: presence_led
+    entity_category: config
+    restore_state: true
+    optimistic: true
+    turn_on_action:
+      - delay: 1s
+      - script.execute: update_presence_led
+    turn_off_action:
+      - delay: 1s
+      - script.execute: update_presence_led
+  - platform: template
+    name: ${friendly_name} Motion LED
+    id: motion_led
+    entity_category: config
+    restore_state: true
+    optimistic: true
+    turn_on_action:
+      - delay: 1s
+      - script.execute: update_motion_led
+    turn_off_action:
+      - delay: 1s
+      - script.execute: update_motion_led
 button:
   - platform: template
     name: ${friendly_name} presence sensor factory_reset
@@ -85,12 +87,11 @@ button:
     on_press:
       - switch.turn_off: sen0395_sensor
       - delay: 1s
-      - uart.write: 
+      - uart.write:
           id: uart_sen0395
           data: "resetCfg"
       - delay: 3s
       - switch.turn_on: sen0395_sensor
-
   - platform: template
     name: ${friendly_name} presence sensor reconfigure
     id: sen0395_sensor_reconfigure
@@ -98,41 +99,76 @@ button:
     on_press:
       - switch.turn_off: sen0395_sensor
       - delay: 2s
-      - uart.write: 
+      - uart.write:
           id: uart_sen0395
           data: "setUartOutput 1 0"
       - delay: 1s
-      - uart.write: 
+      - uart.write:
           id: uart_sen0395
           data: "setLedMode 1 1"
       - delay: 1s
-      - uart.write: 
+      - uart.write:
           id: uart_sen0395
           data: "setRange 0 3.00"
       - delay: 1s
-      - uart.write: 
+      - uart.write:
           id: uart_sen0395
           data: "setSensitivity 7"
       - delay: 1s
-      - uart.write: 
+      - uart.write:
           id: uart_sen0395
           data: "saveConfig"
       - delay: 3s
       - switch.turn_on: sen0395_sensor
-
-
 light:
   - platform: binary
     id: presence_info_led
     internal: true
     output: presence_info_led_output
-
   - platform: status_led
     id: motion_info_led
     internal: true
     pin: GPIO3
-
 output:
   - id: presence_info_led_output
     platform: gpio
     pin: GPIO4
+script:
+  - id: update_presence_led
+    mode: restart
+    then:
+      - if:
+          condition:
+            switch.is_on: presence_led
+          then:
+            - if:
+                condition:
+                  binary_sensor.is_on: sen0395_presence
+                then:
+                  - light.turn_on:
+                      id: presence_info_led
+                else:
+                  - light.turn_off:
+                      id: presence_info_led
+            - script.stop: update_presence_led
+      - light.turn_off:
+          id: presence_info_led
+  - id: update_motion_led
+    mode: restart
+    then:
+      - if:
+          condition:
+            switch.is_on: motion_led
+          then:
+            - if:
+                condition:
+                  binary_sensor.is_on: pir_motion
+                then:
+                  - light.turn_on:
+                      id: motion_info_led
+                else:
+                  - light.turn_off:
+                      id: motion_info_led
+            - script.stop: update_motion_led
+      - light.turn_off:
+          id: motion_info_led

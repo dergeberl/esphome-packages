@@ -1,5 +1,4 @@
 substitutions:
   log_level: INFO
-
 logger:
   level: ${log_level}

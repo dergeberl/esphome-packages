@@ -1,5 +1,4 @@
 substitutions:
   device_name: device-name
-
 esphome:
   name: ${device_name}
