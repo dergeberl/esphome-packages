@@ -34,7 +34,7 @@ sensor:
     temperature:
       name: ${friendly_name} Temperature
       internal: ${mhz19_temperature_hide}
-    update_interval: 5s
+    update_interval: ${mhz19_update_interval}
     uart_id: uart_mhz19
     id: mhz19_id
     automatic_baseline_calibration: false
