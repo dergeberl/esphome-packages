@@ -3,10 +3,12 @@ substitutions:
   wifi_password: password
   wifi_ap_passwort: password
   wifi_domain: ".local"
+  wifi_fast_connect: false
 wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
   domain: ${wifi_domain}
+  fast_connect: ${wifi_fast_connect}
   ap:
     ssid: ${device_name}
     password: ${wifi_ap_passwort}
