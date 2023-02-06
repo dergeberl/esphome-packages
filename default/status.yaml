@@ -1,3 +1,4 @@
 binary_sensor:
   - platform: status
     name: "${friendly_name} Status"
+    id: esphome_status
