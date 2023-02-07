@@ -4,6 +4,11 @@ substitutions:
   uart_tx_pin: GPIO21
   uart_rx_pin: GPIO20
   sen0395_gpio_pin: GPIO5
+  sen0395_detection_segments: "0cm - 9m"
+  sen0395_delay_after_detect: "0s"
+  sen0395_delay_after_disappear: "3s"
+  sen0395_led: "false"
+  sen0395_sensitivity: "7"
 esphome:
   project:
     name: "dergeberl.presence"
@@ -72,14 +77,14 @@ button:
       - dfrobot_mmwave_radar.settings:
           factory_reset: true
           detection_segments:
-            - 0cm - 2m
+            - ${sen0395_detection_segments}
           output_latency:
-            delay_after_detect: 0s
-            delay_after_disappear: 0s
+            delay_after_detect: ${sen0395_delay_after_detect}
+            delay_after_disappear: ${sen0395_delay_after_disappear}
           start_after_power_on: true
-          turn_on_led: false
-          presence_via_uart: true
-          sensitivity: 7
+          turn_on_led: ${sen0395_led}
+          presence_via_uart: false
+          sensitivity: ${sen0395_sensitivity}
 light:
   - platform: binary
     id: presence_info_led
