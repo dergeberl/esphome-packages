@@ -43,3 +43,7 @@ text_sensor:
       name: ${friendly_name} WiFi SSID
       id: esphome_wifi_ssid
       disabled_by_default: true
+    bssid:
+      name: ${friendly_name} WiFi BSSID
+      id: esphome_wifi_bssid
+      disabled_by_default: true
