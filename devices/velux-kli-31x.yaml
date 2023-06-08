@@ -1,0 +1,66 @@
+substitutions:
+  device_name: device-name
+  friendly_name: "Friendly Name"
+  open_pin: GPIO7
+  stop_pin: GPIO6
+  close_pin: GPIO5
+  button_duration: "1000ms"
+  open_duration: "40sec"
+  close_duration: "40sec"
+
+esphome:
+  project:
+    name: "dergeberl.velux-kli31x"
+    version: "v0.0.0"
+
+cover:
+  - platform: time_based
+    name: ${friendly_name}
+    has_built_in_endstop: true
+    manual_control: true
+    assumed_state: true 
+    open_action:
+      - button.press: button_open
+    open_duration: ${open_duration}
+    close_action:
+      - button.press: button_close
+    close_duration: ${close_duration}
+    stop_action:
+      - button.press: button_stop
+
+
+output:
+  - platform: gpio
+    id: gpio_open
+    pin: ${open_pin}
+
+  - platform: gpio
+    id: gpio_stop
+    pin: ${stop_pin}
+
+  - platform: gpio
+    id: gpio_close
+    pin: ${close_pin}
+
+
+button:
+  - platform: output
+    name: ${friendly_name} Open
+    output: gpio_open
+    id: button_open
+    disabled_by_default: True
+    duration: ${button_duration}
+
+  - platform: output
+    name: ${friendly_name} Close
+    output: gpio_close
+    id: button_close
+    disabled_by_default: True
+    duration: ${button_duration}
+
+  - platform: output
+    name: ${friendly_name} Stop
+    output: gpio_stop
+    id: button_stop
+    disabled_by_default: True
+    duration: ${button_duration}
