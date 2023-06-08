@@ -1,0 +1,374 @@
+substitutions:
+  device_name: device-name
+  friendly_name: "Friendly Name"
+
+  deepsleep_default_min: "10"
+  deepsleep_batterylow_min: "60"
+  deepsleep_batterycritical_min: "300"
+  deepsleep_night_min: "20"
+  deepsleep_night_start_hour: "22"
+  deepsleep_night_end_hour: "6"
+
+  ha_outdoor_temperature_enitity: "sensor.outdoor_temperature"
+  ha_outdoor_humidity_enitity: "sensor.outdoor_humidity"
+  ha_indoor_temperature_enitity: "sensor.indoor_temperature"
+  ha_indoor_humidity_enitity: "sensor.outdoor_humidity"
+
+  translate_monday: "Monday"
+  translate_tuesday: "Tuesday"
+  translate_wednesday: "Wednesday"
+  translate_thursday: "Thursday"
+  translate_friday: "Friday"
+  translate_saturday: "Saturday"
+  translate_sunday: "Sunday"
+
+esphome:
+  project:
+    name: "dergeberl.epaper-temperature-display"
+    version: "v0.0.0"
+  on_boot: 
+    priority: 200
+    then:
+    - script.execute: update_display
+
+globals:
+   - id: sleep_time
+     type: int
+     restore_value: no
+     initial_value: '10'
+
+sensor:
+  - platform: homeassistant
+    id: outdoor_temperature
+    internal: true
+    entity_id: ${ha_outdoor_temperature_enitity}
+  - platform: homeassistant
+    id: outdoor_humidity
+    internal: true
+    entity_id: ${ha_outdoor_humidity_enitity}
+
+  - platform: homeassistant
+    id: indoor_temperature
+    internal: true
+    entity_id: ${ha_indoor_temperature_enitity}
+  - platform: homeassistant
+    id: indoor_humidity
+    internal: true
+    entity_id: ${ha_indoor_humidity_enitity}
+
+spi:
+  clk_pin: GPIO13
+  mosi_pin: GPIO14
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO12
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    id: ota_button
+    internal: true
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      - switch.toggle: ota_switch
+
+switch:
+  - platform: template
+    entity_category: config
+    name: "${friendly_name} OTA"
+    id: ota_switch
+    optimistic: true
+    restore_state: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    turn_on_action:
+      - deep_sleep.prevent: deep
+      - wait_until:
+          condition:
+            switch.is_on: ota_switch
+          timeout: 5s
+      # update display directly, even without sensors, to show OTA is enabled
+      - component.update: edisplay
+    turn_off_action:
+      - wait_until:
+          condition:
+            switch.is_off: ota_switch
+          timeout: 5s
+      - script.execute: update_display
+      - deep_sleep.allow: deep
+
+button:
+  - platform: template
+    entity_category: config
+    name: "${friendly_name} update Display"
+    on_press:
+      - script.execute: update_display
+
+
+font:
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 500
+    id: roboto_15
+    size: 15
+  - file: "gfonts://Roboto"
+    id: roboto_20
+    size: 20
+  - file: "gfonts://Roboto"
+    id: roboto_25
+    size: 25
+  - file: "gfonts://Roboto"
+    id: roboto_30
+    size: 30
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 700
+    id: roboto_30_b
+    size: 30
+  
+  - file: "gfonts://Material Symbols Outlined"
+    id: icons_25
+    size: 25
+    glyphs: [
+      "\U0000e1ff", # Device Thermostat
+      "\U0000f87e", # Humidity Percentage
+      "\U0000e000", # Error
+    ]
+  - file:
+      type: gfonts
+      family: Material Symbols Outlined
+      weight: 500
+    id: icons_15
+    size: 15
+    glyphs: [
+      "\U0000e1ff", # Device Thermostat
+      "\U0000f87e", # Humidity Percentage
+      "\U0000e8b5", # Schedule
+      "\U0000e923", # Update
+      "\U0000ebdc", # Battery 0 Bar
+      "\U0000ebd9", # Battery 1 Bar
+      "\U0000ebe0", # Battery 2 Bar
+      "\U0000ebdd", # Battery 3 Bar
+      "\U0000ebe2", # Battery 4 Bar
+      "\U0000ebd4", # Battery 5 Bar
+      "\U0000ebd2", # Battery 6 Bar
+      "\U0000e1a4", # Battery Full
+      "\U0000ec1b", # Electric Meter
+      "\U0000e000", # Error
+    ]
+
+
+display:
+  - platform: waveshare_epaper
+    id: edisplay
+    cs_pin: GPIO15
+    dc_pin: GPIO27
+    busy_pin: GPIO25
+    reset_pin: GPIO26
+    model: 2.13in-ttgo-dke
+    rotation: 0
+    full_update_every: 30
+    update_interval: never
+    lambda: |-
+
+      if (id(outdoor_temperature).state  < 200) {
+        it.print(-2, 5, id(icons_15), "\U0000e1ff");
+        it.printf(13, 5, id(roboto_15), "%.1f°C", id(outdoor_temperature).state);
+      } else {
+        it.print(-2, 5, id(icons_15), "\U0000e000");
+        it.print(15, 5, id(roboto_15), "Error");
+      }
+
+      if (id(outdoor_humidity).state < 200) {
+        it.print(65, 5, id(icons_15), "\U0000f87e");
+        it.printf(80, 5, id(roboto_15), "%.1f%%", id(outdoor_humidity).state);   
+      } else {
+        it.print(65, 5, id(icons_15), "\U0000e000");
+        it.print(82, 5, id(roboto_15), "Error");
+      }
+      
+      it.line(3, 30, 119, 30);
+      
+      if (id(indoor_temperature).state < 200) {
+        it.print(-2, 40, id(icons_25), "\U0000e1ff");
+        it.printf(25, 40, id(roboto_30_b), "%.1f°C", id(indoor_temperature).state);
+      } else {
+        it.print(-2, 40, id(icons_25), "\U0000e000");
+        it.print(25, 40, id(roboto_30_b), "Error");
+      }
+
+      if (id(indoor_humidity).state < 200) {
+        it.print(-2, 75, id(icons_25), "\U0000f87e");
+        it.printf(25, 75, id(roboto_30_b), "%.1f%%", id(indoor_humidity).state);
+      } else {
+        it.print(-2, 75, id(icons_25), "\U0000e000");
+        it.print(25, 75, id(roboto_30_b), "Error");
+      }
+
+      it.line(3, 115, 119, 115);
+
+      if (id(homeassistant_time).now().is_valid()) {
+        if (id(homeassistant_time).now().day_of_week == 1) {
+          it.print(61, 120, id(roboto_25), TextAlign::TOP_CENTER, "${translate_sunday}");
+        } else if (id(homeassistant_time).now().day_of_week == 2) {
+          it.print(61, 120, id(roboto_25), TextAlign::TOP_CENTER, "${translate_monday}");
+        } else if (id(homeassistant_time).now().day_of_week == 3) {
+          it.print(61, 120, id(roboto_25), TextAlign::TOP_CENTER, "${translate_tuesday}");
+        } else if (id(homeassistant_time).now().day_of_week == 4) {
+          it.print(61, 120, id(roboto_25), TextAlign::TOP_CENTER, "${translate_wednesday}");
+        } else if (id(homeassistant_time).now().day_of_week == 5) {
+          it.print(61, 120, id(roboto_25), TextAlign::TOP_CENTER, "${translate_thursday}");
+        } else if (id(homeassistant_time).now().day_of_week == 6) {
+          it.print(61, 120, id(roboto_25), TextAlign::TOP_CENTER, "${translate_friday}");
+        } else {
+          it.print(61, 120, id(roboto_25), TextAlign::TOP_CENTER, "${translate_saturday}");
+        }
+  
+        it.strftime(61, 160, id(roboto_30), TextAlign::TOP_CENTER, "%d.%m.%y", id(homeassistant_time).now());
+      }
+
+      it.line(3, 200, 119, 200);
+
+      if (id(battery).state > 98) {
+        it.print(-2, 210, id(icons_15), "\U0000e1a4");
+      } else if (id(battery).state > 90) {
+        it.print(-2, 210, id(icons_15), "\U0000ebd2");
+      } else if (id(battery).state > 80) {
+        it.print(-2, 210, id(icons_15), "\U0000ebd4");
+      } else if ( id(battery).state > 60) {
+        it.print(-2, 210, id(icons_15), "\U0000ebe2");
+      } else if (id(battery).state > 45) {
+        it.print(-2, 210, id(icons_15), "\U0000ebdd");
+      } else if (id(battery).state > 25) {
+        it.print(-2, 210, id(icons_15), "\U0000ebe0");
+      } else if (id(battery).state > 10) {
+        it.print(-2, 210, id(icons_15), "\U0000ebd9");
+      } else {
+        it.print(-2, 210, id(icons_15), "\U0000ebdc");
+      }
+
+      it.printf(15, 210, id(roboto_15), "%.0f%%", id(battery).state);
+      it.print(65, 210, id(icons_15),  "\U0000ec1b");
+      it.printf(80, 210, id(roboto_15), "%.2fv", id(battery_voltage).state);
+
+
+      if (id(ota_switch).state) {
+        it.print(-2, 230, id(icons_15), "\U0000e923");
+        it.print(15, 230, id(roboto_15), "OTA is enabled");
+      } else {
+        it.print(-2, 230, id(icons_15), "\U0000e923");
+        it.printf(15, 230, id(roboto_15), "%im", id(sleep_time));
+        it.print(65, 230, id(icons_15), "\U0000e8b5");
+        it.strftime(80, 230, id(roboto_15), "%H:%M", id(homeassistant_time).now());
+      }
+
+deep_sleep:
+  id: deep
+  sleep_duration: 
+    minutes: ${deepsleep_default_min}
+  # Backup run_duration if the script fails so the ESP go to sleep.
+  run_duration: 5min
+  wakeup_pin:
+    number: GPIO12
+    inverted: true
+    mode:
+      input: true
+      pullup: true
+
+
+script:
+  - id: update_display
+    mode: restart
+    then:
+    - script.execute: update_sensors
+    - script.wait: update_sensors
+    - script.execute: calculate_deepsleep_time
+    - script.wait: calculate_deepsleep_time
+    - component.update: edisplay
+    - component.update: esphome_uptime
+    - script.execute: deepsleep_if_possible
+    - delay: 60s
+    - script.execute: update_display
+  - id: update_sensors
+    mode: restart
+    then:
+    - component.update: battery_voltage
+    - component.update: battery
+    - wait_until:
+        timeout: 15s
+        condition:
+          - api.connected: 
+    - wait_until:
+        timeout: 15s
+        condition:
+          and: 
+          - time.has_time:
+          - sensor.in_range:
+              id: indoor_temperature
+              below: 200
+          - sensor.in_range:
+              id: indoor_humidity
+              below: 200
+          - sensor.in_range:
+              id: outdoor_temperature
+              below: 200
+          - sensor.in_range:
+              id: outdoor_humidity
+              below: 200
+  - id: calculate_deepsleep_time
+    mode: restart
+    then:
+    - if:
+        condition:
+          sensor.in_range:
+            id: battery_voltage
+            below: 3.1
+        then:
+        - lambda: |
+            id(sleep_time) = ${deepsleep_batterycritical_min};
+        - script.stop: calculate_deepsleep_time
+    - if:
+        condition:
+          sensor.in_range:
+            id: battery_voltage
+            below: 3.2
+        then:
+        - lambda: |
+            id(sleep_time) = ${deepsleep_batterylow_min};
+        - script.stop: calculate_deepsleep_time
+    - if:
+        condition:
+          or:
+          - lambda: |-
+              return id(homeassistant_time).now().hour >= ${deepsleep_night_start_hour};
+          - lambda: |-
+              return id(homeassistant_time).now().hour < ${deepsleep_night_end_hour}; 
+        then:
+        - lambda: |
+            id(sleep_time) = ${deepsleep_night_min};
+        - script.stop: calculate_deepsleep_time
+    - lambda: |
+        id(sleep_time) = ${deepsleep_default_min};
+  - id: deepsleep_if_possible
+    mode: restart
+    then:
+    - if:
+        condition:
+          sensor.in_range:
+            id: battery_voltage
+            above: 4.2
+        then: 
+        - script.stop: deepsleep_if_possible
+    - if:
+        condition:
+        - switch.is_on: ota_switch
+        then:
+        - script.stop: deepsleep_if_possible
+    - deep_sleep.enter: 
+        id: deep
+        sleep_duration: !lambda |-
+          return id(sleep_time) * 60000;

@@ -1,0 +1,32 @@
+substitutions:
+  friendly_name: "Friendly Name"
+
+  battery_voltage_update_interval: "60s"
+  battery_update_interval: "60s"
+
+esp32:
+  board: esp32dev
+
+sensor:
+  - platform: adc
+    pin: GPIO36
+    name: "${friendly_name} Battery voltage"
+    id: battery_voltage
+    icon: mdi:battery
+    device_class: voltage
+    accuracy_decimals: 3
+    attenuation: auto
+    filters:
+     - multiply: 3
+    update_interval: ${battery_voltage_update_interval}
+  - platform: template
+    name: "${friendly_name} Battery"
+    id: battery
+    device_class: battery
+    unit_of_measurement: '%'
+    update_interval: ${battery_update_interval}
+    lambda: |-
+      if (id(battery_voltage).state > 4.2) {
+        return 100;
+      }
+      return ((id(battery_voltage).state -3) /1.2 * 100.00);
