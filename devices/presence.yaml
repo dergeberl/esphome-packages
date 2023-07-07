@@ -4,7 +4,8 @@ substitutions:
   uart_tx_pin: GPIO21
   uart_rx_pin: GPIO20
   sen0395_gpio_pin: GPIO5
-  sen0395_detection_segments: "0cm - 9m"
+  sen0395_detection_segment_start: "0cm"
+  sen0395_detection_segment_end: "9m"
   sen0395_delay_after_detect: "0s"
   sen0395_delay_after_disappear: "3s"
   sen0395_led: "false"
@@ -77,7 +78,8 @@ button:
       - dfrobot_mmwave_radar.settings:
           factory_reset: true
           detection_segments:
-            - ${sen0395_detection_segments}
+            - ${sen0395_detection_segment_start}
+            - ${sen0395_detection_segment_end}
           output_latency:
             delay_after_detect: ${sen0395_delay_after_detect}
             delay_after_disappear: ${sen0395_delay_after_disappear}
