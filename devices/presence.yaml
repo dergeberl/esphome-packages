@@ -38,7 +38,7 @@ switch:
     name: ${friendly_name} Presence Sensor
     id: sen0395_sensor
     entity_category: config
-    restore_state: true
+    restore_mode: RESTORE_DEFAULT_ON
     optimistic: true
     turn_on_action:
       - dfrobot_mmwave_radar.start
@@ -48,7 +48,7 @@ switch:
     name: ${friendly_name} Presence LED
     id: presence_led
     entity_category: config
-    restore_state: true
+    restore_mode: RESTORE_DEFAULT_ON
     optimistic: true
     turn_on_action:
       - delay: 1s
