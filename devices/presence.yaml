@@ -14,15 +14,12 @@ esphome:
   project:
     name: "dergeberl.presence"
     version: "v0.0.0"
-external_components:
-  - source: github://pr#4203
-    components: [ dfrobot_mmwave_radar ]
 uart:
   id: uart_sen0395
   tx_pin: ${uart_tx_pin}
   rx_pin: ${uart_rx_pin}
   baud_rate: 115200
-dfrobot_mmwave_radar:
+dfrobot_sen0395:
 binary_sensor:
   - platform: gpio
     name: ${friendly_name} Presence
@@ -34,16 +31,16 @@ binary_sensor:
     on_state:
       - script.execute: update_presence_led
 switch:
-  - platform: template
+  - platform: dfrobot_sen0395
+    type: sensor_active
     name: ${friendly_name} Presence Sensor
     id: sen0395_sensor
     entity_category: config
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    turn_on_action:
-      - dfrobot_mmwave_radar.start
-    turn_off_action:
-      - dfrobot_mmwave_radar.stop
+  - platform: dfrobot_sen0395
+    type: start_after_boot
+    name: ${friendly_name} Presence Sensor Autostart
+    id: sen0395_sensor_autostart
+    entity_category: config
   - platform: template
     name: ${friendly_name} Presence LED
     id: presence_led
@@ -56,36 +53,44 @@ switch:
     turn_off_action:
       - delay: 1s
       - script.execute: update_presence_led
+  - platform: dfrobot_sen0395
+    type: turn_on_led
+    name: ${friendly_name} Presence LED
+    id: sen0395_sensor_led
+    internal: true
+    restore_mode: ALWAYS_OFF
+  - platform: dfrobot_sen0395
+    type: presence_via_uart
+    name: ${friendly_name} Presence UART
+    id: sen0395_sensor_uart
+    internal: true
+    restore_mode: ALWAYS_OFF
 button:
   - platform: template
-    name: ${friendly_name} presence sensor factory_reset
+    name: ${friendly_name} Presence Sensor factory_reset
     id: sen0395_sensor_factory_reset
     entity_category: diagnostic
     on_press:
-      - dfrobot_mmwave_radar.settings:
+      - dfrobot_sen0395.settings:
           factory_reset: true
   - platform: template
-    name: ${friendly_name} presence sensor restart
+    name: ${friendly_name} Presence Sensor restart
     id: sen0395_sensor_restart
     entity_category: diagnostic
     on_press:
-      - dfrobot_mmwave_radar.reset
+      - dfrobot_sen0395.reset
   - platform: template
-    name: ${friendly_name} presence sensor reconfigure
+    name: ${friendly_name} Presence Sensor reconfigure
     id: sen0395_sensor_reconfigure
     entity_category: diagnostic
     on_press:
-      - dfrobot_mmwave_radar.settings:
-          factory_reset: true
+      - dfrobot_sen0395.settings:
           detection_segments:
             - ${sen0395_detection_segment_start}
             - ${sen0395_detection_segment_end}
           output_latency:
             delay_after_detect: ${sen0395_delay_after_detect}
             delay_after_disappear: ${sen0395_delay_after_disappear}
-          start_after_power_on: true
-          turn_on_led: ${sen0395_led}
-          presence_via_uart: false
           sensitivity: ${sen0395_sensitivity}
 light:
   - platform: binary
