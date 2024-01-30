@@ -26,5 +26,5 @@ jobs:
           sed -i "s/ref: main/ref:  ${GITHUB_HEAD_REF}/g" examples/${{ matrix.example-file }}
       - uses: esphome/build-action@v1
         with:
-          version: 2023.12.8
+          version: "2023.12.8" # "esphome/esphome"
           yaml_file: examples/${{ matrix.example-file }}
