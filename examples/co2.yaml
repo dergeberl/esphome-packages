@@ -1,0 +1,31 @@
+substitutions:
+  device_name: example-co2-sensor
+  friendly_name: "Example co2"
+  wifi_ssid: "ssid"
+  wifi_password: "password"
+  mhz19_temperature_hide: "true"
+  led_orange_above: "800"
+  led_red_above: "1000"
+  led_red_blink_above: "1400"
+
+packages:
+  remote_package:
+    url: https://github.com/dergeberl/esphome-packages
+    ref: main
+    files: 
+      - boards/seeed-xiao-esp32c3.yaml
+      - default/main.yaml
+      - default/logger.yaml
+      - default/wifi.yaml
+      - default/diagnostic.yaml
+      - default/webserver.yaml
+      - default/status.yaml
+      - devices/co2.yaml
+    refresh: 1m
+
+# !use encryption and ota password!
+#api:
+#  encryption:
+#    key: "XXX"
+#ota:
+#  password: "XXX"
