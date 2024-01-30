@@ -23,9 +23,10 @@ packages:
       - devices/co2.yaml
     refresh: 1s
 
-# !use encryption and ota password!
+# !use encryption!
 #api:
 #  encryption:
 #    key: "XXX"
-#ota:
-#  password: "XXX"
+
+ota:
+  password: "CHANGEME"
