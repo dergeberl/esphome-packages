@@ -19,6 +19,7 @@ jobs:
         run: echo "files=$(ls examples/ | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
   build:
     name: build
+    needs: [list-example-files]
     runs-on: ubuntu-latest
     strategy:
       matrix:
