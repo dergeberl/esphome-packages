@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-          example-file: ${{ fromJson(needs.list-example-files.outputs.files) }}
+        example-file: ${{ fromJson(needs.list-example-files.outputs.files) }}
     steps:
       - uses: actions/setup-go@v5
         with:
