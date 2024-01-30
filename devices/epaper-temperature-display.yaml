@@ -274,6 +274,7 @@ deep_sleep:
   run_duration: 5min
   wakeup_pin:
     number: GPIO12
+    allow_other_uses: true
     inverted: true
     mode:
       input: true
