@@ -20,9 +20,9 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-latest
-      strategy:
-        matrix:
-            example-file: ${{ fromJson(needs.list-example-files.outputs.files) }}
+    strategy:
+      matrix:
+          example-file: ${{ fromJson(needs.list-example-files.outputs.files) }}
     steps:
       - uses: actions/setup-go@v5
         with:
