@@ -1,9 +1,6 @@
 name: example-build
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches: [ main ]
 
@@ -24,10 +21,9 @@ jobs:
       matrix:
         example-file: ${{ fromJson(needs.list-example-files.outputs.files) }}
     steps:
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
       - uses: actions/checkout@v4
+      - run: |
+          sed -i "s/ref: main/ref:  ${GITHUB_HEAD_REF}/g" examples/${{ matrix.example-file }}
       - uses: esphome/build-action@v1
         with:
           yaml_file: examples/${{ matrix.example-file }}
