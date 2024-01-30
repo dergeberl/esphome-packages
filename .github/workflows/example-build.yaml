@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: files
-        run: echo "::set-output name=files::$(ls examples/ | jq -R -s -c 'split("\n")[:-1]')"
+        run: echo "files=$(ls examples/ | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
   build:
     name: build
     runs-on: ubuntu-latest
