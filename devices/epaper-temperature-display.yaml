@@ -65,6 +65,7 @@ binary_sensor:
     pin:
       number: GPIO12
       inverted: true
+      allow_other_uses: true
       mode:
         input: true
         pullup: true
