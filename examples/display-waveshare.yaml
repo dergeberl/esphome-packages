@@ -30,8 +30,8 @@ packages:
       - devices/epaper-temperature-display.yaml
     refresh: 1s
 
+api:
 # !use encryption!
-#api:
 #  encryption:
 #    key: "XXX"
 

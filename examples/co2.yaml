@@ -20,11 +20,12 @@ packages:
       - default/diagnostic.yaml
       - default/webserver.yaml
       - default/status.yaml
+      - default/time.yaml
       - devices/co2.yaml
     refresh: 1s
 
+api:
 # !use encryption!
-#api:
 #  encryption:
 #    key: "XXX"
 

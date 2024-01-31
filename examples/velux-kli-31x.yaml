@@ -20,8 +20,8 @@ packages:
       - devices/velux-kli-31x.yaml
     refresh: 1s
 
+api:
 # !use encryption!
-#api:
 #  encryption:
 #    key: "XXX"
 
