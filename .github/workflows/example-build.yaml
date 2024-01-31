@@ -22,8 +22,10 @@ jobs:
         example-file: ${{ fromJson(needs.list-example-files.outputs.files) }}
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          sed -i "s/ref: main/ref:  ${GITHUB_HEAD_REF}/g" examples/${{ matrix.example-file }}
+      - name: Set branch
+        run: |
+          echo ${GITHUB_HEAD_REF}
+          sed -i "s#ref: main#ref:  ${GITHUB_HEAD_REF}#g" examples/${{ matrix.example-file }}
       - uses: esphome/build-action@v1
         with:
           # renovate: image=esphome/esphome 
