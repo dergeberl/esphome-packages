@@ -1,12 +1,8 @@
 substitutions:
-  device_name: example-co2-sensor
+  device_name: example-velux
   friendly_name: "Example"
   wifi_ssid: "ssid"
   wifi_password: "password"
-  mhz19_temperature_hide: "true"
-  led_orange_above: "800"
-  led_red_above: "1000"
-  led_red_blink_above: "1400"
 
 packages:
   remote_package:
@@ -20,7 +16,8 @@ packages:
       - default/diagnostic.yaml
       - default/webserver.yaml
       - default/status.yaml
-      - devices/co2.yaml
+      - default/time.yaml
+      - devices/velux-kli-31x.yaml
     refresh: 1s
 
 # !use encryption!
