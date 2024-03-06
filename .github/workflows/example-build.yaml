@@ -26,7 +26,7 @@ jobs:
         run: |
           echo ${GITHUB_HEAD_REF}
           sed -i "s#ref: main#ref:  ${GITHUB_HEAD_REF}#g" examples/${{ matrix.example-file }}
-      - uses: esphome/build-action@v1
+      - uses: esphome/build-action@v2
         with:
           # renovate: image=esphome/esphome 
           version: "2024.2.2"
