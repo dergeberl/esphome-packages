@@ -1,0 +1,35 @@
+substitutions:
+  device_name: iskra-mt631
+  friendly_name: "Example"
+  wifi_ssid: "ssid"
+  wifi_password: "password"
+  # without_pin: set to "true" if no PIN is entered in powermeter. 
+  ## Consumption and production are more accurate if the PIN is entered and needs to be calculated. 
+  ## This also removes the unavailable power sensor in case no pin is provided.
+  without_pin: "false"
+  consumption_throttle: 60s
+  production_throttle: 60s
+  #log_level: DEBUG # set to "DEBUG" to see OBS Info
+packages:
+  remote_package:
+    url: https://github.com/dergeberl/esphome-packages
+    ref: main
+    files: 
+      - boards/seeed-xiao-esp32c3.yaml
+      - default/main.yaml
+      - default/logger.yaml
+      - default/wifi.yaml
+      - default/diagnostic.yaml
+      - default/webserver.yaml
+      - default/status.yaml
+      - default/time.yaml
+      - devices/iskra-mt631.yaml
+    refresh: 1s
+
+api:
+# !use encryption!
+#  encryption:
+#    key: "XXX"
+
+ota:
+  password: "CHANGEME"
