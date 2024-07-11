@@ -31,3 +31,4 @@ api:
 
 ota:
   password: "CHANGEME"
+  platform: esphome
