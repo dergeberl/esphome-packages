@@ -29,5 +29,5 @@ jobs:
       - uses: esphome/build-action@v6
         with:
           # renovate: image=esphome/esphome 
-          version: "2024.12.2"
+          version: "2024.12.4"
           yaml-file: examples/${{ matrix.example-file }} 
