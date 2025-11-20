@@ -10,7 +10,7 @@ jobs:
     outputs:
       files: ${{ steps.files.outputs.files }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - id: files
         run: echo "files=$(ls examples/ | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
   build:
@@ -21,7 +21,7 @@ jobs:
       matrix:
         example-file: ${{ fromJson(needs.list-example-files.outputs.files) }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set branch
         run: |
           echo ${GITHUB_HEAD_REF}
