@@ -7,12 +7,11 @@ substitutions:
   led_orange_above: "800"
   led_red_above: "1000"
   led_red_blink_above: "1400"
-
 packages:
   remote_package:
     url: https://github.com/dergeberl/esphome-packages
     ref: main
-    files: 
+    files:
       - boards/seeed-xiao-esp32c3.yaml
       - default/main.yaml
       - default/logger.yaml
@@ -23,12 +22,10 @@ packages:
       - default/time.yaml
       - devices/co2.yaml
     refresh: 1s
-
 api:
 # !use encryption!
 #  encryption:
 #    key: "XXX"
-
 ota:
   password: "CHANGEME"
   platform: esphome

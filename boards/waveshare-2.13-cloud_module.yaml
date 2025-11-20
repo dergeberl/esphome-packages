@@ -1,12 +1,9 @@
 substitutions:
   friendly_name: "Friendly Name"
-
   battery_voltage_update_interval: "60s"
   battery_update_interval: "60s"
-
 esp32:
   board: esp32dev
-
 sensor:
   - platform: adc
     pin: GPIO36
@@ -17,7 +14,7 @@ sensor:
     accuracy_decimals: 3
     attenuation: auto
     filters:
-     - multiply: 3
+      - multiply: 3
     update_interval: ${battery_voltage_update_interval}
   - platform: template
     name: "${friendly_name} Battery"
