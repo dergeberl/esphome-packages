@@ -1,7 +1,7 @@
 substitutions:
   device_name: device-name
   friendly_name: "Friendly Name"
-  deepsleep_default_min: "180"
+  deepsleep_default_min: "180min"
   dashboard_url: "http://homeassistant.local:10000/lovelace?viewport=480x800&format=bmp&theme=Graphite+E-ink+Dark&zoom=1.1&lang=de&colors=000000%2CFFFFFF&palette_colors=000000%2CFFFFFF&dithering=sierra"
 esphome:
   project:
@@ -13,8 +13,7 @@ esphome:
         - script.execute: update_display
 deep_sleep:
   id: deep
-  run_duration: 3min
-  sleep_duration: 3min
+  sleep_duration: ${deepsleep_default_min}
   wakeup_pin:
     number: GPIO4
     allow_other_uses: true
