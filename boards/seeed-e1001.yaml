@@ -1,0 +1,52 @@
+substitutions:
+  friendly_name: "Friendly Name"
+  battery_voltage_update_interval: "60s"
+  battery_update_interval: "60s"
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+esphome:
+  on_boot:
+    - priority: 600
+      then:
+        - output.turn_on: bsp_battery_enable
+output:
+  - platform: gpio
+    pin: GPIO21
+    id: bsp_battery_enable
+sensor:
+  - platform: adc
+    pin: GPIO1
+    name: "${friendly_name} Battery Voltage"
+    id: battery_voltage
+    attenuation: 12db
+    filters:
+      - multiply: 2.0
+    update_interval: ${battery_voltage_update_interval}
+  - platform: template
+    name: "${friendly_name} Battery"
+    id: battery_level
+    unit_of_measurement: "%"
+    icon: "mdi:battery"
+    device_class: battery
+    state_class: measurement
+    lambda: 'return id(battery_voltage).state;'
+    update_interval: ${battery_update_interval}
+    filters:
+      - calibrate_linear:
+          - 4.15 -> 100.0
+          - 3.96 -> 90.0
+          - 3.91 -> 80.0
+          - 3.85 -> 70.0
+          - 3.80 -> 60.0
+          - 3.75 -> 50.0
+          - 3.68 -> 40.0
+          - 3.58 -> 30.0
+          - 3.49 -> 20.0
+          - 3.41 -> 10.0
+          - 3.30 -> 5.0
+          - 3.27 -> 0.0
+      - clamp:
+          min_value: 0
+          max_value: 100

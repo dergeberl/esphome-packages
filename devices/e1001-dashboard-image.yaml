@@ -1,0 +1,152 @@
+substitutions:
+  device_name: device-name
+  friendly_name: "Friendly Name"
+  deepsleep_default_min: "180"
+  dashboard_url: "http://homeassistant.local:10000/lovelace?viewport=480x800&format=bmp&theme=Graphite+E-ink+Dark&zoom=1.1&lang=de&colors=000000%2CFFFFFF&palette_colors=000000%2CFFFFFF&dithering=sierra"
+esphome:
+  project:
+    name: "dergeberl.e1001-dashboard-image"
+    version: "v0.0.0"
+  on_boot:
+    - priority: 200
+      then:
+        - script.execute: update_display
+deep_sleep:
+  id: deep
+  run_duration: 3min
+  sleep_duration: 3min
+  wakeup_pin:
+    number: GPIO4
+    allow_other_uses: true
+  wakeup_pin_mode: INVERT_WAKEUP
+switch:
+  - platform: template
+    entity_category: config
+    name: "${friendly_name} OTA"
+    id: ota_switch
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - deep_sleep.prevent: deep
+      - display.page.show: otaview
+      - script.execute: update_display
+    turn_off_action:
+      - display.page.show: dashboard
+      - script.execute: update_display
+      - delay: 1s
+      - deep_sleep.allow: deep
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO3
+      ignore_strapping_warning: true
+      mode: INPUT_PULLUP
+      inverted: true
+    internal: true
+    id: button_green
+    on_press:
+      then:
+        - switch.toggle: ota_switch
+  - platform: gpio
+    pin:
+      number: GPIO4
+      mode: INPUT_PULLUP
+      allow_other_uses: true
+      inverted: true
+    internal: true
+    id: button_right
+    on_press:
+      then:
+  - platform: gpio
+    pin:
+      number: GPIO5
+      mode: INPUT_PULLUP
+      inverted: true
+    internal: true
+    id: button_left
+    on_press:
+      then:
+psram:
+  mode: octal
+  speed: 80MHz
+spi:
+  clk_pin: GPIO7
+  mosi_pin: GPIO9
+http_request:
+  verify_ssl: false
+  timeout: 20s
+  watchdog_timeout: 25s
+online_image:
+  - id: dashboard_image
+    format: BMP
+    type: BINARY
+    buffer_size: 65536
+    url: "${dashboard_url}"
+    on_download_finished:
+      then:
+        - component.update: epaper_display
+        - component.update: esphome_uptime
+        - delay: 1s
+        - script.execute: deepsleep_if_possible
+font:
+  - file: "gfonts://Roboto"
+    id: roboto_15
+    size: 15
+  - file: "gfonts://Roboto"
+    id: roboto_50
+    size: 50
+  - file:
+      type: gfonts
+      family: Material Symbols Outlined
+      weight: 500
+    id: icons_100
+    size: 100
+    glyphs: ["", # Update
+    ]
+display:
+  - platform: waveshare_epaper
+    id: epaper_display
+    rotation: 90
+    model: 7.50inv2
+    cs_pin: GPIO10
+    dc_pin: GPIO11
+    reset_pin:
+      number: GPIO12
+      inverted: false
+    busy_pin:
+      number: GPIO13
+      inverted: true
+    update_interval: never
+    pages:
+      - id: dashboard
+        lambda: |-
+          it.image(0, 0, id(dashboard_image));
+          it.strftime(10, 780, id(roboto_15), "%d.%m.%y %H:%M", id(homeassistant_time).now());
+      - id: otaview
+        lambda: |-
+          it.print(200, 30, id(icons_100), TextAlign::TOP_CENTER, "\U0000e923");
+          it.print(200, 230, id(roboto_50), TextAlign::TOP_CENTER, "OTA is enabled");      
+button:
+  - platform: template
+    name: "${friendly_name} Refresh display"
+    id: refesh_image
+    icon: "mdi:image-frame"
+    on_press:
+      - component.update: epaper_display
+script:
+  - id: update_display
+    mode: restart
+    then:
+      - component.update: dashboard_image
+      - delay: 60s
+      - script.execute: update_display
+  - id: deepsleep_if_possible
+    mode: restart
+    then:
+      - if:
+          condition:
+            - switch.is_on: ota_switch
+          then:
+            - script.stop: deepsleep_if_possible
+      - deep_sleep.enter:
+          id: deep
