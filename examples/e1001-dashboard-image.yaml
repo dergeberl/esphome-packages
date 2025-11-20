@@ -1,0 +1,29 @@
+substitutions:
+  device_name: example-dashboard-image
+  friendly_name: "Example"
+  wifi_ssid: "ssid"
+  wifi_password: "password"
+  wifi_fast_connect: "True"
+  dashboard_url: "http://homeassistant.local:10000/lovelace?viewport=480x800&format=bmp&theme=Graphite+E-ink+Dark&zoom=1.1&lang=de&colors=000000%2CFFFFFF&palette_colors=000000%2CFFFFFF&dithering=sierra"
+packages:
+  remote_package:
+    url: https://github.com/dergeberl/esphome-packages
+    ref: main
+    files:
+      - boards/seeed-e1001.yaml
+      - default/main.yaml
+      - default/logger.yaml
+      - default/wifi.yaml
+      - default/diagnostic.yaml
+      - default/webserver.yaml
+      - default/status.yaml
+      - default/time.yaml
+      - devices/e1001-dashboard-image.yaml
+    refresh: 1s
+api:
+# !use encryption!
+#  encryption:
+#    key: "XXX"
+ota:
+  password: "CHANGEME"
+  platform: esphome
