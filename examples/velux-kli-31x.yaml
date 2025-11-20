@@ -3,12 +3,11 @@ substitutions:
   friendly_name: "Example"
   wifi_ssid: "ssid"
   wifi_password: "password"
-
 packages:
   remote_package:
     url: https://github.com/dergeberl/esphome-packages
     ref: main
-    files: 
+    files:
       - boards/seeed-xiao-esp32c3.yaml
       - default/main.yaml
       - default/logger.yaml
@@ -19,12 +18,10 @@ packages:
       - default/time.yaml
       - devices/velux-kli-31x.yaml
     refresh: 1s
-
 api:
 # !use encryption!
 #  encryption:
 #    key: "XXX"
-
 ota:
   password: "CHANGEME"
   platform: esphome

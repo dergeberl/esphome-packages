@@ -3,16 +3,14 @@ substitutions:
   friendly_name: "Example"
   wifi_ssid: "ssid"
   wifi_password: "password"
-
   sen0395_detection_segment_start: "0cm"
   sen0395_detection_segment_end: "3m"
   sen0395_delay_after_disappear: "10s"
-
 packages:
   remote_package:
     url: https://github.com/dergeberl/esphome-packages
     ref: main
-    files: 
+    files:
       - boards/seeed-xiao-esp32c3.yaml
       - default/main.yaml
       - default/logger.yaml
@@ -23,12 +21,10 @@ packages:
       - default/time.yaml
       - devices/presence.yaml
     refresh: 1s
-
 api:
 # !use encryption!
 #  encryption:
 #    key: "XXX"
-
 ota:
   password: "CHANGEME"
   platform: esphome

@@ -123,9 +123,7 @@ display:
           it.image(0, 0, id(dashboard_image));
           it.strftime(10, 780, id(roboto_15), "%d.%m.%y %H:%M", id(homeassistant_time).now());
       - id: otaview
-        lambda: |-
-          it.print(200, 30, id(icons_100), TextAlign::TOP_CENTER, "\U0000e923");
-          it.print(200, 230, id(roboto_50), TextAlign::TOP_CENTER, "OTA is enabled");      
+        lambda: "it.print(200, 30, id(icons_100), TextAlign::TOP_CENTER, \"\\U0000e923\");\nit.print(200, 230, id(roboto_50), TextAlign::TOP_CENTER, \"OTA is enabled\");      "
 button:
   - platform: template
     name: "${friendly_name} Refresh display"

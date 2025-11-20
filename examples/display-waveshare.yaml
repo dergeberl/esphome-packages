@@ -4,21 +4,17 @@ substitutions:
   wifi_ssid: "ssid"
   wifi_password: "password"
   wifi_fast_connect: "True"
-
   battery_voltage_update_interval: "never"
   battery_update_interval: "never"
-
   ha_outdoor_temperature_enitity: "sensor.outdoor_temperature"
   ha_outdoor_humidity_enitity: "sensor.outdoor_humidity"
   ha_indoor_temperature_enitity: "sensor.indoor_temperature"
   ha_indoor_humidity_enitity: "sensor.outdoor_humidity"
-
-
 packages:
   remote_package:
     url: https://github.com/dergeberl/esphome-packages
     ref: main
-    files: 
+    files:
       - boards/waveshare-2.13-cloud_module.yaml
       - default/main.yaml
       - default/logger.yaml
@@ -29,12 +25,10 @@ packages:
       - default/status.yaml
       - devices/epaper-temperature-display.yaml
     refresh: 1s
-
 api:
 # !use encryption!
 #  encryption:
 #    key: "XXX"
-
 ota:
   password: "CHANGEME"
   platform: esphome
