@@ -56,9 +56,9 @@ number:
       then:
         - script.execute: update_leds
 light:
-  - platform: neopixelbus
-    type: GRB
-    variant: ws2812
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    chipset: ws2812
     pin: ${neopixel_pin}
     internal: true
     num_leds: ${neopixel_num_leds}
