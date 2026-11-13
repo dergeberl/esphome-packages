@@ -1,0 +1,419 @@
+# Seeed Studio ReSpeaker Lite voice satellite (XMOS XU316 + XIAO ESP32-S3).
+#
+# Adapted from the Seeed Studio Wiki page "Voice Assistant System for Home
+# Assistant reSpeaker Lite" (https://wiki.seeedstudio.com/respeaker_lite_ha/),
+# which credits FormatBCE for the original YAML
+# (https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration).
+# Code examples embedded in the Seeed wiki are MIT licensed
+# (https://wiki.seeedstudio.com/License/) - keep this attribution when reusing.
+#
+# Ported to stock ESPHome >= 2026.10 audio components (resampler microphone,
+# speaker_source media player, native sendspin) and slimmed down to:
+# wake word + voice assistant + media player (incl. Sendspin) + buttons +
+# simple status LED. No timers, alarms or LED animations.
+#
+# The status LED colours follow the EchoMuse ring scenes
+# (wilbowes/EchoMuse, controller/em_scenes.py, default "standard" scene):
+# green (0,180,0) while the voice assistant is active, red (180,0,0) when the
+# mic is muted, orange (255,40,0) when Home Assistant is not connected.
+#
+# Hardware prerequisite: the XMOS must run the 48kHz I2S firmware
+# (respeaker_lite_i2s_dfu_firmware_48k_v1.1.0.bin). The firmware block below
+# flashes it automatically on boot when the version is older; alternatively
+# flash it once manually with dfu-util (see the wiki page). Solder USR to
+# D2 (GPIO3) and MUTE to D3 (GPIO4) to use the buttons.
+
+substitutions:
+  device_name: respeaker-lite
+  friendly_name: "ReSpeaker Lite"
+  # Tag of the external respeaker_lite component (XMOS control + DFU update),
+  # pinned to the ESPHome release this package targets
+  respeaker_lite_ref: "2026.10.1"
+
+esphome:
+  project:
+    name: "dergeberl.respeaker-lite"
+    version: "v0.0.0"
+  min_version: 2026.10.0
+  on_shutdown:
+    then:
+      # Prevent loud noise on software restart
+      - lambda: id(respeaker).mute_speaker();
+
+network:
+  enable_ipv6: true
+
+i2c:
+  - id: internal_i2c
+    sda: GPIO5
+    scl: GPIO6
+    frequency: 400kHz
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration
+      ref: ${respeaker_lite_ref}
+    components:
+      - respeaker_lite
+    refresh: 0s
+
+respeaker_lite:
+  id: respeaker
+  reset_pin: GPIO2
+  mute_state:
+    internal: true
+    id: mute_state
+  firmware_version:
+    icon: mdi:application-cog
+    name: "${friendly_name} XMOS firmware version"
+    id: firmware_version
+  firmware:
+    url: https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration/raw/${respeaker_lite_ref}/respeaker_lite_i2s_dfu_firmware_48k_v1.1.0.bin
+    version: "1.1.0"
+    md5: 9297155d1bf3eb21a9d4db52a89ea0c6
+
+audio_dac:
+  - platform: aic3204
+    id: aic3204_dac
+    i2c_id: internal_i2c
+
+i2s_audio:
+  # The XMOS drives the I2S clocks (48kHz), the ESP32 is secondary on both buses
+  - id: i2s_output
+    i2s_lrclk_pin:
+      number: GPIO7
+      allow_other_uses: true
+    i2s_bclk_pin:
+      number: GPIO8
+      allow_other_uses: true
+    i2s_mclk_pin:
+      number: GPIO9
+      allow_other_uses: true
+  - id: i2s_input
+    i2s_lrclk_pin:
+      number: GPIO7
+      allow_other_uses: true
+    i2s_bclk_pin:
+      number: GPIO8
+      allow_other_uses: true
+    i2s_mclk_pin:
+      number: GPIO9
+      allow_other_uses: true
+
+microphone:
+  # Dual mic array behind the XMOS, 48kHz stereo (channel 0: ASR, channel 1: wake word)
+  - platform: i2s_audio
+    id: i2s_mics_raw
+    i2s_din_pin: GPIO44
+    adc_type: external
+    pdm: false
+    sample_rate: 48000
+    bits_per_sample: 32bit
+    i2s_mode: secondary
+    i2s_audio_id: i2s_input
+    channel: stereo
+  # Voice assistant and wake word need 16kHz
+  - platform: resampler
+    id: i2s_mics
+    microphone:
+      microphone: i2s_mics_raw
+      channels: [0, 1]
+      bits_per_sample: 16
+    sample_rate: 16000
+
+speaker:
+  # Speaker / 3.5mm jack via the TLV320AIC3204 codec
+  - platform: i2s_audio
+    id: i2s_audio_speaker
+    sample_rate: 48000
+    i2s_mode: secondary
+    i2s_dout_pin: GPIO43
+    bits_per_sample: 32bit
+    i2s_audio_id: i2s_output
+    dac_type: external
+    channel: stereo
+    timeout: never
+    buffer_duration: 100ms
+    audio_dac: aic3204_dac
+  # Combine announcement and media streams into the single hardware output
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: i2s_audio_speaker
+    num_channels: 2
+    source_speakers:
+      - id: announcement_mixing_input
+        timeout: never
+      - id: media_mixing_input
+        timeout: never
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+
+sendspin:
+  id: sendspin_hub
+
+media_source:
+  - platform: audio_http
+    id: http_announcement_source
+    buffer_size: 250000
+  - platform: audio_http
+    id: http_media_source
+    buffer_size: 500000
+  - platform: sendspin
+    id: sendspin_media_source
+    codecs: [FLAC, PCM]
+    fixed_delay: 480 microseconds # the AIC3204 delays audio by 480us as configured
+
+media_player:
+  # Sendspin group controls (Music Assistant multi-room)
+  - platform: sendspin
+    id: sendspin_group_media_player
+  # Voice assistant announcements + media playback on the speaker
+  - platform: speaker_source
+    id: external_media_player
+    name: "${friendly_name} Media Player"
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.85
+    announcement_pipeline:
+      speaker: announcement_resampling_speaker
+      format: FLAC
+      num_channels: 1
+      sample_rate: 48000
+      sources:
+        - http_announcement_source
+    media_pipeline:
+      speaker: media_resampling_speaker
+      format: FLAC
+      num_channels: 2
+      sample_rate: 48000
+      sources:
+        - http_media_source
+        - sendspin_media_source
+    on_announcement:
+      - mixer_speaker.apply_ducking:
+          id: media_mixing_input
+          decibel_reduction: 20
+          duration: 0.0s
+    on_state:
+      if:
+        condition:
+          and:
+            - not:
+                voice_assistant.is_running:
+            - not:
+                media_player.is_announcing: external_media_player
+        then:
+          - mixer_speaker.apply_ducking:
+              id: media_mixing_input
+              decibel_reduction: 0
+              duration: 1.0s
+
+micro_wake_word:
+  id: mww
+  microphone:
+    microphone: i2s_mics
+    channels: 1
+    gain_factor: 4
+  stop_after_detection: false
+  models:
+    - model: https://github.com/OHF-Voice/micro-wake-word/releases/download/okay_nabu_20241226.3/okay_nabu.json
+      id: okay_nabu
+    - model: hey_jarvis
+      id: hey_jarvis
+    - model: hey_mycroft
+      id: hey_mycroft
+  vad:
+    probability_cutoff: 0.05
+  on_wake_word_detected:
+    - if:
+        condition:
+          switch.is_off: mic_mute_switch
+        then:
+          - if:
+              condition:
+                voice_assistant.is_running:
+              then:
+                - voice_assistant.stop:
+              else:
+                - voice_assistant.start:
+                    wake_word: !lambda return wake_word;
+
+select:
+  - platform: template
+    name: "${friendly_name} Wake word sensitivity"
+    id: wake_word_sensitivity
+    optimistic: true
+    initial_option: Slightly sensitive
+    restore_value: true
+    entity_category: config
+    options:
+      - Slightly sensitive
+      - Moderately sensitive
+      - Very sensitive
+    on_value:
+      lambda: |-
+        if (x == "Slightly sensitive") {
+          id(okay_nabu).set_probability_cutoff(217);
+          id(hey_jarvis).set_probability_cutoff(247);
+          id(hey_mycroft).set_probability_cutoff(253);
+        } else if (x == "Moderately sensitive") {
+          id(okay_nabu).set_probability_cutoff(176);
+          id(hey_jarvis).set_probability_cutoff(235);
+          id(hey_mycroft).set_probability_cutoff(242);
+        } else if (x == "Very sensitive") {
+          id(okay_nabu).set_probability_cutoff(143);
+          id(hey_jarvis).set_probability_cutoff(212);
+          id(hey_mycroft).set_probability_cutoff(237);
+        }
+
+voice_assistant:
+  id: va
+  microphone:
+    microphone: i2s_mics
+    channels: 0
+  media_player: external_media_player
+  micro_wake_word: mww
+  use_wake_word: false
+  noise_suppression_level: 0
+  auto_gain: 0 dbfs
+  volume_multiplier: 1
+  on_client_connected:
+    - micro_wake_word.start:
+  on_client_disconnected:
+    - voice_assistant.stop:
+    # EchoMuse "no controller" link colour: orange (255, 40, 0); mute red wins
+    - if:
+        condition:
+          switch.is_on: mic_mute_switch
+        then:
+          - light.turn_on:
+              id: status_led
+              red: 70.6%
+              green: 0%
+              blue: 0%
+              brightness: 100%
+        else:
+          - light.turn_on:
+              id: status_led
+              red: 100%
+              green: 15.7%
+              blue: 0%
+              brightness: 100%
+  on_start:
+    # Duck media while the assistant is active
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 20
+        duration: 0.0s
+    # EchoMuse standard scene: green (0, 180, 0) for the whole assistant turn
+    - light.turn_on:
+        id: status_led
+        red: 0%
+        green: 70.6%
+        blue: 0%
+        brightness: 100%
+  on_error:
+    # Red like the EchoMuse mute ring (180, 0, 0)
+    - light.turn_on:
+        id: status_led
+        red: 70.6%
+        green: 0%
+        blue: 0%
+        brightness: 100%
+  on_end:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 0
+        duration: 1.0s
+    - if:
+        condition:
+          switch.is_on: mic_mute_switch
+        then:
+          - light.turn_on:
+              id: status_led
+              red: 70.6%
+              green: 0%
+              blue: 0%
+              brightness: 100%
+        else:
+          - light.turn_off: status_led
+
+light:
+  # Single WS2812 status LED
+  - platform: esp32_rmt_led_strip
+    id: status_led
+    name: "${friendly_name} LED"
+    rgb_order: GRB
+    pin: GPIO1
+    num_leds: 1
+    rmt_symbols: 192
+    chipset: ws2812
+    default_transition_length: 0s
+
+binary_sensor:
+  # User button (solder USR to D2/GPIO3); single press toggles the voice assistant
+  - platform: gpio
+    id: user_button
+    pin:
+      number: GPIO3
+      inverted: true
+    name: "${friendly_name} User button"
+    on_click:
+      - if:
+          condition:
+            voice_assistant.is_running:
+          then:
+            - voice_assistant.stop:
+          else:
+            - voice_assistant.start:
+
+switch:
+  # Stateless pulse to the XMOS hardware mic mute (MUTE soldered to D3/GPIO4)
+  - platform: gpio
+    internal: true
+    pin:
+      number: GPIO4
+      inverted: true
+    id: mute_toggle
+    on_turn_on:
+      - delay: 300ms
+      - switch.turn_off: mute_toggle
+  # User-facing mic mute switch
+  - platform: template
+    id: mic_mute_switch
+    name: "${friendly_name} Mic mute"
+    icon: mdi:microphone-off
+    lambda: |-
+      return id(mute_state).state;
+    turn_on_action:
+      - if:
+          condition:
+            lambda: return !id(mute_state).state;
+          then:
+            - switch.turn_on: mute_toggle
+      # EchoMuse mute ring: solid red (180, 0, 0)
+      - light.turn_on:
+          id: status_led
+          red: 70.6%
+          green: 0%
+          blue: 0%
+          brightness: 100%
+    turn_off_action:
+      - if:
+          condition:
+            lambda: return id(mute_state).state;
+          then:
+            - switch.turn_on: mute_toggle
+      - light.turn_off: status_led

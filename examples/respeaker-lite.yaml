@@ -1,0 +1,32 @@
+# Seeed Studio ReSpeaker Lite voice satellite example.
+# Prerequisites: the XMOS must run the 48kHz I2S firmware (the package's
+# firmware block flashes respeaker_lite_i2s_dfu_firmware_48k_v1.1.0.bin
+# automatically on boot, or flash it once with dfu-util), and the buttons
+# need USR soldered to D2 (GPIO3) and MUTE to D3 (GPIO4).
+substitutions:
+  device_name: example-respeaker-lite
+  friendly_name: "ReSpeaker Lite"
+  wifi_ssid: "ssid"
+  wifi_password: "password"
+packages:
+  remote_package:
+    url: https://github.com/dergeberl/esphome-packages
+    ref: main
+    files:
+      - boards/seeed-respeaker-lite.yaml
+      - default/main.yaml
+      - default/logger.yaml
+      - default/wifi.yaml
+      - default/diagnostic.yaml
+      - default/webserver.yaml
+      - default/status.yaml
+      - default/time.yaml
+      - devices/respeaker-lite.yaml
+    refresh: 1s
+api:
+# !use encryption!
+#  encryption:
+#    key: "XXX"
+ota:
+  password: "CHANGEME"
+  platform: esphome
