@@ -1,0 +1,27 @@
+substitutions:
+  device_name: example-respeaker-lite
+  friendly_name: "ReSpeaker Lite"
+  wifi_ssid: "ssid"
+  wifi_password: "password"
+packages:
+  remote_package:
+    url: https://github.com/dergeberl/esphome-packages
+    ref: main
+    files:
+      - boards/seeed-respeaker-lite.yaml
+      - default/main.yaml
+      - default/logger.yaml
+      - default/wifi.yaml
+      - default/diagnostic.yaml
+      - default/webserver.yaml
+      - default/status.yaml
+      - default/time.yaml
+      - devices/respeaker-lite.yaml
+    refresh: 1s
+api:
+# !use encryption!
+#  encryption:
+#    key: "XXX"
+ota:
+  password: "CHANGEME"
+  platform: esphome
