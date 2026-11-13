@@ -12,6 +12,11 @@
 # wake word + voice assistant + media player (incl. Sendspin) + buttons +
 # simple status LED. No timers, alarms or LED animations.
 #
+# The status LED colours follow the EchoMuse ring scenes
+# (wilbowes/EchoMuse, controller/em_scenes.py, default "standard" scene):
+# green (0,180,0) while the voice assistant is active, red (180,0,0) when the
+# mic is muted, orange (255,40,0) when Home Assistant is not connected.
+#
 # Hardware prerequisite: the XMOS must run the 48kHz I2S firmware
 # (respeaker_lite_i2s_dfu_firmware_48k_v1.1.0.bin). The firmware block below
 # flashes it automatically on boot when the version is older; alternatively
@@ -61,7 +66,7 @@ respeaker_lite:
     id: mute_state
   firmware_version:
     icon: mdi:application-cog
-    name: XMOS firmware version
+    name: "${friendly_name} XMOS firmware version"
     id: firmware_version
   firmware:
     url: https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration/raw/${respeaker_lite_ref}/respeaker_lite_i2s_dfu_firmware_48k_v1.1.0.bin
@@ -285,40 +290,45 @@ voice_assistant:
     - micro_wake_word.start:
   on_client_disconnected:
     - voice_assistant.stop:
-    - light.turn_off: status_led
+    # EchoMuse "no controller" link colour: orange (255, 40, 0); mute red wins
+    - if:
+        condition:
+          switch.is_on: mic_mute_switch
+        then:
+          - light.turn_on:
+              id: status_led
+              red: 70.6%
+              green: 0%
+              blue: 0%
+              brightness: 100%
+        else:
+          - light.turn_on:
+              id: status_led
+              red: 100%
+              green: 15.7%
+              blue: 0%
+              brightness: 100%
   on_start:
     # Duck media while the assistant is active
     - mixer_speaker.apply_ducking:
         id: media_mixing_input
         decibel_reduction: 20
         duration: 0.0s
+    # EchoMuse standard scene: green (0, 180, 0) for the whole assistant turn
     - light.turn_on:
         id: status_led
         red: 0%
-        green: 0%
-        blue: 100%
-        brightness: 30%
-  on_listening:
-    - light.turn_on:
-        id: status_led
-        red: 0%
-        green: 0%
-        blue: 100%
-        brightness: 30%
-  on_tts_start:
-    - light.turn_on:
-        id: status_led
-        red: 0%
-        green: 100%
-        blue: 100%
-        brightness: 30%
+        green: 70.6%
+        blue: 0%
+        brightness: 100%
   on_error:
+    # Red like the EchoMuse mute ring (180, 0, 0)
     - light.turn_on:
         id: status_led
-        red: 100%
+        red: 70.6%
         green: 0%
         blue: 0%
-        brightness: 30%
+        brightness: 100%
   on_end:
     - wait_until:
         not:
@@ -327,7 +337,18 @@ voice_assistant:
         id: media_mixing_input
         decibel_reduction: 0
         duration: 1.0s
-    - light.turn_off: status_led
+    - if:
+        condition:
+          switch.is_on: mic_mute_switch
+        then:
+          - light.turn_on:
+              id: status_led
+              red: 70.6%
+              green: 0%
+              blue: 0%
+              brightness: 100%
+        else:
+          - light.turn_off: status_led
 
 light:
   # Single WS2812 status LED
@@ -382,9 +403,17 @@ switch:
             lambda: return !id(mute_state).state;
           then:
             - switch.turn_on: mute_toggle
+      # EchoMuse mute ring: solid red (180, 0, 0)
+      - light.turn_on:
+          id: status_led
+          red: 70.6%
+          green: 0%
+          blue: 0%
+          brightness: 100%
     turn_off_action:
       - if:
           condition:
             lambda: return id(mute_state).state;
           then:
             - switch.turn_on: mute_toggle
+      - light.turn_off: status_led
