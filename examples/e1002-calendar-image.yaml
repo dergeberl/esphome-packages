@@ -1,0 +1,33 @@
+substitutions:
+  device_name: example-e1002-calendar
+  friendly_name: "Example"
+  wifi_ssid: "ssid"
+  wifi_password: "password"
+  wifi_fast_connect: "True"
+  calendar_url: "http://puppet.local:8080/calendar.png"
+  refresh_interval_min: "30"
+  night_mode_enabled: "true"
+  night_start_hour: "22"
+  night_end_hour: "7"
+packages:
+  remote_package:
+    url: https://github.com/dergeberl/esphome-packages
+    ref: main
+    files:
+      - boards/seeed-e1002.yaml
+      - default/main.yaml
+      - default/logger.yaml
+      - default/wifi.yaml
+      - default/diagnostic.yaml
+      - default/webserver.yaml
+      - default/status.yaml
+      - default/time.yaml
+      - devices/e1002-calendar-image.yaml
+    refresh: 1s
+api:
+# !use encryption!
+#  encryption:
+#    key: "XXX"
+ota:
+  password: "CHANGEME"
+  platform: esphome
