@@ -6,18 +6,10 @@ esphome:
     name: "dergeberl.e1001-dashboard-image"
     version: "v0.0.0"
 display:
-  - platform: waveshare_epaper
+  - platform: epaper_spi
     id: epaper_display
+    model: Seeed-reTerminal-E1001
     rotation: 90
-    model: 7.50inv2
-    cs_pin: GPIO10
-    dc_pin: GPIO11
-    reset_pin:
-      number: GPIO12
-      inverted: false
-    busy_pin:
-      number: GPIO13
-      inverted: true
     update_interval: never
     lambda: |-
       it.image(0, 0, id(dashboard_image));
