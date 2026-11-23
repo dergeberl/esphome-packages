@@ -2,7 +2,9 @@ substitutions:
   device_name: device-name
   friendly_name: "Friendly Name"
   ha_image_url_entity: "input_text.dashboard_image_url"
-  refresh_interval: "60s"
+  refresh_interval: "60"
+  refresh_interval_min: "10"
+  refresh_interval_max: "86400"
   deepsleep_default_duration: "180min"
   deepsleep_duration_min: "1"
   deepsleep_duration_max: "10080"
@@ -40,6 +42,18 @@ text_sensor:
       - script.execute: update_display
 number:
   - platform: template
+    name: "${friendly_name} Refresh interval"
+    id: refresh_interval
+    entity_category: config
+    icon: "mdi:timer-refresh-outline"
+    unit_of_measurement: "s"
+    min_value: ${refresh_interval_min}
+    max_value: ${refresh_interval_max}
+    step: 1
+    initial_value: ${refresh_interval}
+    optimistic: true
+    restore_value: true
+  - platform: template
     name: "${friendly_name} Deep sleep duration"
     id: deepsleep_duration
     entity_category: config
@@ -51,6 +65,15 @@ number:
     initial_value: ${deepsleep_duration_initial}
     optimistic: true
     restore_value: true
+switch:
+  - platform: template
+    name: "${friendly_name} Auto refresh"
+    id: auto_refresh
+    entity_category: config
+    icon: "mdi:autorenew"
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - script.execute: update_display
 button:
   - platform: template
     name: "${friendly_name} Deep sleep"
@@ -109,5 +132,9 @@ script:
             lambda: 'return !id(image_url).empty();'
           then:
             - component.update: dashboard_image
-            - delay: ${refresh_interval}
-            - script.execute: update_display
+            - if:
+                condition:
+                  - switch.is_on: auto_refresh
+                then:
+                  - delay: !lambda 'return (uint32_t)(id(refresh_interval).state * 1000.0f);'
+                  - script.execute: update_display

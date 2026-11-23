@@ -1,6 +1,7 @@
 substitutions:
   image_format: "BMP"
   image_type: "BINARY"
+  full_update_every: "30"
 esphome:
   project:
     name: "dergeberl.e1001-dashboard-image"
@@ -11,5 +12,6 @@ display:
     model: Seeed-reTerminal-E1001
     rotation: 90
     update_interval: never
+    full_update_every: ${full_update_every}
     lambda: |-
       it.image(0, 0, id(dashboard_image));
