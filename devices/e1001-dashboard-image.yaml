@@ -14,5 +14,4 @@ display:
     update_interval: never
     full_update_every: ${full_update_every}
     lambda: |-
-      id(display_update_count) += 1;
       it.image(0, 0, id(dashboard_image));

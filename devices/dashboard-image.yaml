@@ -141,6 +141,7 @@ image:
     on_download_finished:
       then:
         - component.update: epaper_display
+        - lambda: 'id(display_update_count) += 1;'
         - component.update: esphome_uptime
 script:
   - id: update_display
