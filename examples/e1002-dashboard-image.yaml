@@ -1,0 +1,29 @@
+substitutions:
+  device_name: example-e1002-dashboard-image
+  friendly_name: "Example"
+  wifi_ssid: "ssid"
+  wifi_password: "password"
+  wifi_fast_connect: "True"
+  ha_image_url_entity: "input_text.example_dashboard_image_url"
+packages:
+  remote_package:
+    url: https://github.com/dergeberl/esphome-packages
+    ref: main
+    files:
+      - boards/seeed-e1002.yaml
+      - default/main.yaml
+      - default/logger.yaml
+      - default/wifi.yaml
+      - default/diagnostic.yaml
+      - default/webserver.yaml
+      - default/status.yaml
+      - default/time.yaml
+      - devices/e1002-dashboard-image.yaml
+    refresh: 1s
+api:
+# !use encryption!
+#  encryption:
+#    key: "XXX"
+ota:
+  password: "CHANGEME"
+  platform: esphome

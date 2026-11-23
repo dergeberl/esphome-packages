@@ -1,8 +1,14 @@
 substitutions:
   device_name: device-name
   friendly_name: "Friendly Name"
-  deepsleep_default_min: "180min"
-  dashboard_url: "http://homeassistant.local:10000/lovelace?viewport=480x800&format=bmp&theme=Graphite+E-ink+Dark&zoom=1.1&lang=de&colors=000000%2CFFFFFF&palette_colors=000000%2CFFFFFF&dithering=sierra"
+  ha_image_url_entity: "input_text.dashboard_image_url"
+  image_format: "BMP"
+  image_type: "BINARY"
+  refresh_interval: "60s"
+  deepsleep_default_duration: "180min"
+  deepsleep_duration_min: "1"
+  deepsleep_duration_max: "10080"
+  deepsleep_duration_initial: "180"
 esphome:
   project:
     name: "dergeberl.e1001-dashboard-image"
@@ -13,27 +19,61 @@ esphome:
         - script.execute: update_display
 deep_sleep:
   id: deep
-  sleep_duration: ${deepsleep_default_min}
+  sleep_duration: ${deepsleep_default_duration}
   wakeup_pin:
     number: GPIO4
     allow_other_uses: true
   wakeup_pin_mode: INVERT_WAKEUP
-switch:
+globals:
+  - id: image_url
+    type: std::string
+    restore_value: yes
+    storage: flash
+    max_restore_data_length: 254
+    initial_value: '""'
+text_sensor:
+  - platform: homeassistant
+    id: ha_image_url
+    entity_id: ${ha_image_url_entity}
+    internal: true
+    on_value:
+      - lambda: |-
+          id(image_url) = x;
+      - online_image.set_url:
+          id: dashboard_image
+          url: !lambda 'return id(image_url);'
+          update: false
+      - script.execute: update_display
+number:
   - platform: template
+    name: "${friendly_name} Deep sleep duration"
+    id: deepsleep_duration
     entity_category: config
-    name: "${friendly_name} OTA"
-    id: ota_switch
+    icon: "mdi:sleep"
+    unit_of_measurement: "min"
+    min_value: ${deepsleep_duration_min}
+    max_value: ${deepsleep_duration_max}
+    step: 1
+    initial_value: ${deepsleep_duration_initial}
     optimistic: true
-    restore_mode: ALWAYS_OFF
-    turn_on_action:
-      - deep_sleep.prevent: deep
-      - display.page.show: otaview
-      - script.execute: update_display
-    turn_off_action:
-      - display.page.show: dashboard
-      - script.execute: update_display
+    restore_value: true
+button:
+  - platform: template
+    name: "${friendly_name} Deep sleep"
+    id: deepsleep_button
+    entity_category: config
+    icon: "mdi:sleep"
+    on_press:
       - delay: 1s
-      - deep_sleep.allow: deep
+      - deep_sleep.enter:
+          id: deep
+          sleep_duration: !lambda 'return (uint32_t)(id(deepsleep_duration).state * 60000.0f);'
+  - platform: template
+    name: "${friendly_name} Refresh display"
+    id: refresh_image
+    icon: "mdi:image-frame"
+    on_press:
+      - script.execute: update_display
 binary_sensor:
   - platform: gpio
     pin:
@@ -44,8 +84,7 @@ binary_sensor:
     internal: true
     id: button_green
     on_press:
-      then:
-        - switch.toggle: ota_switch
+      - script.execute: update_display
   - platform: gpio
     pin:
       number: GPIO4
@@ -75,33 +114,21 @@ http_request:
   verify_ssl: false
   timeout: 20s
   watchdog_timeout: 25s
-online_image:
+image:
   - id: dashboard_image
-    format: BMP
-    type: BINARY
+    platform: online_image
+    format: ${image_format}
+    type: ${image_type}
     buffer_size: 65536
-    url: "${dashboard_url}"
+    url: "http://placeholder.invalid/image"
     on_download_finished:
       then:
         - component.update: epaper_display
         - component.update: esphome_uptime
-        - delay: 1s
-        - script.execute: deepsleep_if_possible
 font:
   - file: "gfonts://Roboto"
     id: roboto_15
     size: 15
-  - file: "gfonts://Roboto"
-    id: roboto_50
-    size: 50
-  - file:
-      type: gfonts
-      family: Material Symbols Outlined
-      weight: 500
-    id: icons_100
-    size: 100
-    glyphs: ["", # Update
-    ]
 display:
   - platform: waveshare_epaper
     id: epaper_display
@@ -116,34 +143,17 @@ display:
       number: GPIO13
       inverted: true
     update_interval: never
-    pages:
-      - id: dashboard
-        lambda: |-
-          it.image(0, 0, id(dashboard_image));
-          it.strftime(10, 780, id(roboto_15), "%d.%m.%y %H:%M", id(homeassistant_time).now());
-      - id: otaview
-        lambda: "it.print(200, 30, id(icons_100), TextAlign::TOP_CENTER, \"\\U0000e923\");\nit.print(200, 230, id(roboto_50), TextAlign::TOP_CENTER, \"OTA is enabled\");      "
-button:
-  - platform: template
-    name: "${friendly_name} Refresh display"
-    id: refesh_image
-    icon: "mdi:image-frame"
-    on_press:
-      - component.update: epaper_display
+    lambda: |-
+      it.image(0, 0, id(dashboard_image));
+      it.strftime(10, 780, id(roboto_15), "%d.%m.%y %H:%M", id(homeassistant_time).now());
 script:
   - id: update_display
     mode: restart
     then:
-      - component.update: dashboard_image
-      - delay: 60s
-      - script.execute: update_display
-  - id: deepsleep_if_possible
-    mode: restart
-    then:
       - if:
           condition:
-            - switch.is_on: ota_switch
+            lambda: 'return !id(image_url).empty();'
           then:
-            - script.stop: deepsleep_if_possible
-      - deep_sleep.enter:
-          id: deep
+            - component.update: dashboard_image
+            - delay: ${refresh_interval}
+            - script.execute: update_display
