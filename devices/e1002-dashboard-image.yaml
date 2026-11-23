@@ -1,0 +1,16 @@
+substitutions:
+  image_format: "PNG"
+  image_type: "RGB565"
+  full_update_every: "1"
+esphome:
+  project:
+    name: "dergeberl.e1002-dashboard-image"
+    version: "v0.0.0"
+display:
+  - platform: epaper_spi
+    id: epaper_display
+    model: Seeed-reTerminal-E1002
+    update_interval: never
+    full_update_every: ${full_update_every}
+    lambda: |-
+      it.image(0, 0, id(dashboard_image));

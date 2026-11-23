@@ -1,0 +1,161 @@
+substitutions:
+  device_name: device-name
+  friendly_name: "Friendly Name"
+  ha_image_url_entity: "input_text.dashboard_image_url"
+  refresh_interval: "60"
+  refresh_interval_min: "10"
+  refresh_interval_max: "86400"
+  deepsleep_default_duration: "180min"
+  deepsleep_duration_min: "1"
+  deepsleep_duration_max: "10080"
+  deepsleep_duration_initial: "180"
+esphome:
+  on_boot:
+    - priority: 200
+      then:
+        - script.execute: update_display
+deep_sleep:
+  id: deep
+  sleep_duration: ${deepsleep_default_duration}
+  wakeup_pin:
+    number: GPIO4
+  wakeup_pin_mode: INVERT_WAKEUP
+globals:
+  - id: image_url
+    type: std::string
+    restore_value: yes
+    storage: flash
+    max_restore_data_length: 254
+    initial_value: '""'
+  - id: display_update_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+sensor:
+  - platform: template
+    name: "${friendly_name} Display updates"
+    id: display_update_count_sensor
+    icon: "mdi:counter"
+    accuracy_decimals: 0
+    state_class: total_increasing
+    lambda: 'return id(display_update_count);'
+    update_interval: 1s
+text_sensor:
+  - platform: homeassistant
+    id: ha_image_url
+    entity_id: ${ha_image_url_entity}
+    internal: true
+    on_value:
+      - lambda: |-
+          id(image_url) = x;
+      - online_image.set_url:
+          id: dashboard_image
+          url: !lambda 'return id(image_url);'
+          update: false
+      - script.execute: update_display
+number:
+  - platform: template
+    name: "${friendly_name} Refresh interval"
+    id: refresh_interval
+    entity_category: config
+    icon: "mdi:timer-refresh-outline"
+    unit_of_measurement: "s"
+    min_value: ${refresh_interval_min}
+    max_value: ${refresh_interval_max}
+    step: 1
+    initial_value: ${refresh_interval}
+    optimistic: true
+    restore_value: true
+  - platform: template
+    name: "${friendly_name} Deep sleep duration"
+    id: deepsleep_duration
+    entity_category: config
+    icon: "mdi:sleep"
+    unit_of_measurement: "min"
+    min_value: ${deepsleep_duration_min}
+    max_value: ${deepsleep_duration_max}
+    step: 1
+    initial_value: ${deepsleep_duration_initial}
+    optimistic: true
+    restore_value: true
+switch:
+  - platform: template
+    name: "${friendly_name} Auto refresh"
+    id: auto_refresh
+    entity_category: config
+    icon: "mdi:autorenew"
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - switch.template.publish:
+          id: auto_refresh
+          state: true
+      - script.execute: update_display
+    turn_off_action:
+      - switch.template.publish:
+          id: auto_refresh
+          state: false
+button:
+  - platform: template
+    name: "${friendly_name} Deep sleep"
+    id: deepsleep_button
+    entity_category: config
+    icon: "mdi:sleep"
+    on_press:
+      - delay: 1s
+      - deep_sleep.enter:
+          id: deep
+          sleep_duration: !lambda 'return (uint32_t)(id(deepsleep_duration).state * 60000.0f);'
+  - platform: template
+    name: "${friendly_name} Refresh display"
+    id: refresh_image
+    icon: "mdi:image-frame"
+    on_press:
+      - script.execute: update_display
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO3
+      ignore_strapping_warning: true
+      mode: INPUT_PULLUP
+      inverted: true
+    internal: true
+    id: button_green
+    on_press:
+      - script.execute: update_display
+psram:
+  mode: octal
+  speed: 80MHz
+spi:
+  clk_pin: GPIO7
+  mosi_pin: GPIO9
+http_request:
+  verify_ssl: false
+  timeout: 20s
+  watchdog_timeout: 25s
+image:
+  - id: dashboard_image
+    platform: online_image
+    format: ${image_format}
+    type: ${image_type}
+    buffer_size: 65536
+    url: "http://placeholder.invalid/image"
+    on_download_finished:
+      then:
+        - component.update: epaper_display
+        - lambda: 'id(display_update_count) += 1;'
+        - component.update: esphome_uptime
+script:
+  - id: update_display
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return !id(image_url).empty();'
+          then:
+            - component.update: dashboard_image
+            - if:
+                condition:
+                  - switch.is_on: auto_refresh
+                then:
+                  - delay: !lambda 'return (uint32_t)(id(refresh_interval).state * 1000.0f);'
+                  - script.execute: update_display

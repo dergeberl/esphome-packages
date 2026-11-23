@@ -1,23 +1,23 @@
 substitutions:
-  device_name: example-dashboard-image
+  device_name: example-e1001-dashboard-image
   friendly_name: "Example"
   wifi_ssid: "ssid"
   wifi_password: "password"
   wifi_fast_connect: "True"
-  dashboard_url: "http://homeassistant.local:10000/lovelace?viewport=480x800&format=bmp&theme=Graphite+E-ink+Dark&zoom=1.1&lang=de&colors=000000%2CFFFFFF&palette_colors=000000%2CFFFFFF&dithering=sierra"
+  ha_image_url_entity: "input_text.example_dashboard_image_url"
 packages:
   remote_package:
     url: https://github.com/dergeberl/esphome-packages
     ref: main
     files:
-      - boards/seeed-e1001.yaml
+      - boards/seeed-e10xx.yaml
       - default/main.yaml
       - default/logger.yaml
       - default/wifi.yaml
       - default/diagnostic.yaml
       - default/webserver.yaml
       - default/status.yaml
-      - default/time.yaml
+      - devices/dashboard-image.yaml
       - devices/e1001-dashboard-image.yaml
     refresh: 1s
 api:
