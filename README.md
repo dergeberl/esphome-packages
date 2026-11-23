@@ -2,7 +2,9 @@
 
 Reusable ESPHome packages, organized in three layers:
 
-- `boards/` - board/hardware definition (MCU, pins, battery, ...)
+- `boards/` - board/hardware definition (MCU, pins, battery, ...); the reTerminal
+  E1001/E1002 share `seeed-e10xx.yaml` (same MCU, battery and button pins), only the
+  panel differs and is configured in the device files
 - `default/` - generic defaults (wifi, logger, diagnostic, time, ...)
 - `devices/` - device use cases, referencing a board; shared logic lives in a common
   file (e.g. `dashboard-image.yaml`) and panel specific parts (display, image format)

@@ -10,7 +10,7 @@ packages:
     url: https://github.com/dergeberl/esphome-packages
     ref: main
     files:
-      - boards/seeed-e1001.yaml
+      - boards/seeed-e10xx.yaml
       - default/main.yaml
       - default/logger.yaml
       - default/wifi.yaml
