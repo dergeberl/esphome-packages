@@ -4,14 +4,18 @@ Reusable ESPHome packages, organized in three layers:
 
 - `boards/` - board/hardware definition (MCU, pins, battery, ...)
 - `default/` - generic defaults (wifi, logger, diagnostic, time, ...)
-- `devices/` - device specific use cases, referencing a board
+- `devices/` - device use cases, referencing a board; shared logic lives in a common
+  file (e.g. `dashboard-image.yaml`) and panel specific parts (display, image format)
+  in per-device files (e.g. `e1001-dashboard-image.yaml`)
 - `examples/` - ready to use example configs, built by CI on every PR
 
 ## reTerminal E1001 / E1002 dashboard image
 
-`devices/e1001-dashboard-image.yaml` (reTerminal E1001, 7.5" mono e-paper) and
-`devices/e1002-dashboard-image.yaml` (reTerminal E1002, 7.3" 6-color e-paper) display an
-image on the e-paper display, e.g. a Home Assistant dashboard screenshot rendered by the
+`devices/dashboard-image.yaml` contains the shared logic (image download, deep sleep,
+buttons, ...). `devices/e1001-dashboard-image.yaml` (reTerminal E1001, 7.5" mono e-paper)
+and `devices/e1002-dashboard-image.yaml` (reTerminal E1002, 7.3" 6-color e-paper) add the
+panel specific display configuration. Together they display an image on the e-paper
+display, e.g. a Home Assistant dashboard screenshot rendered by the
 [Pupeteer/Puppet add-on](https://github.com/lovelylain/ha-pupeteer) on port 10000.
 
 See `examples/e1001-dashboard-image.yaml` and `examples/e1002-dashboard-image.yaml`.
