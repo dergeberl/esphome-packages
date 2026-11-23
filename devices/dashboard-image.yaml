@@ -27,6 +27,18 @@ globals:
     storage: flash
     max_restore_data_length: 254
     initial_value: '""'
+  - id: display_update_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+sensor:
+  - platform: template
+    name: "${friendly_name} Display updates"
+    id: display_update_count_sensor
+    icon: "mdi:counter"
+    state_class: total_increasing
+    lambda: 'return id(display_update_count);'
+    update_interval: 1s
 text_sensor:
   - platform: homeassistant
     id: ha_image_url
@@ -128,6 +140,7 @@ image:
     url: "http://placeholder.invalid/image"
     on_download_finished:
       then:
+        - lambda: 'id(display_update_count) += 1;'
         - component.update: epaper_display
         - component.update: esphome_uptime
 script:
