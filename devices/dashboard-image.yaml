@@ -36,6 +36,7 @@ sensor:
     name: "${friendly_name} Display updates"
     id: display_update_count_sensor
     icon: "mdi:counter"
+    accuracy_decimals: 0
     state_class: total_increasing
     lambda: 'return id(display_update_count);'
     update_interval: 1s
