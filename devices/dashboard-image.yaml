@@ -140,7 +140,6 @@ image:
     url: "http://placeholder.invalid/image"
     on_download_finished:
       then:
-        - lambda: 'id(display_update_count) += 1;'
         - component.update: epaper_display
         - component.update: esphome_uptime
 script:
