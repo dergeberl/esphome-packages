@@ -17,7 +17,6 @@ packages:
       - default/diagnostic.yaml
       - default/webserver.yaml
       - default/status.yaml
-      - default/time.yaml
       - devices/dashboard-image.yaml
       - devices/e1002-dashboard-image.yaml
     refresh: 1s

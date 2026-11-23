@@ -12,4 +12,3 @@ display:
     update_interval: never
     lambda: |-
       it.image(0, 0, id(dashboard_image));
-      it.strftime(10, 460, id(roboto_15), Color(0, 0, 0, 0), "%d.%m.%y %H:%M", id(homeassistant_time).now());

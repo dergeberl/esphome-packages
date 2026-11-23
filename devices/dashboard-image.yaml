@@ -120,10 +120,6 @@ image:
       then:
         - component.update: epaper_display
         - component.update: esphome_uptime
-font:
-  - file: "gfonts://Roboto"
-    id: roboto_15
-    size: 15
 script:
   - id: update_display
     mode: restart
