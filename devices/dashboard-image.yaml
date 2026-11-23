@@ -17,7 +17,6 @@ deep_sleep:
   sleep_duration: ${deepsleep_default_duration}
   wakeup_pin:
     number: GPIO4
-    allow_other_uses: true
   wakeup_pin_mode: INVERT_WAKEUP
 globals:
   - id: image_url
@@ -80,25 +79,6 @@ binary_sensor:
     id: button_green
     on_press:
       - script.execute: update_display
-  - platform: gpio
-    pin:
-      number: GPIO4
-      mode: INPUT_PULLUP
-      allow_other_uses: true
-      inverted: true
-    internal: true
-    id: button_right
-    on_press:
-      then:
-  - platform: gpio
-    pin:
-      number: GPIO5
-      mode: INPUT_PULLUP
-      inverted: true
-    internal: true
-    id: button_left
-    on_press:
-      then:
 psram:
   mode: octal
   speed: 80MHz

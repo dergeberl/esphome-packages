@@ -6,6 +6,8 @@ esp32:
   board: esp32-s3-devkitc-1
   framework:
     type: esp-idf
+    advanced:
+      flash_chip: winbond
 esphome:
   on_boot:
     - priority: 600
